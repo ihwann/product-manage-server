@@ -6,7 +6,7 @@ spring:
     console:
       enabled: true
   datasource:
-    url: jdbc:h2:mem:product-manage-server
+    url: jdbc:h2:mem:product-manage-server;MODE=MySQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -28,3 +28,10 @@ spring:
     redis:
       host: 127.0.0.1
       port: 6379
+
+redis:
+  key:
+    price-sorted-set:
+      category: price-sorted-set-by-category
+      brand-category: price-sorted-set-by-brand-category
+      brand: price-sorted-set-by-brand

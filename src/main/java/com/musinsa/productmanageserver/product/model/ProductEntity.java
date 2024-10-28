@@ -2,15 +2,20 @@ package com.musinsa.productmanageserver.product.model;
 
 
 import com.musinsa.productmanageserver.common.type.Category;
+import com.musinsa.productmanageserver.product.dto.internal.ProductInsertDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,8 +30,9 @@ public class ProductEntity extends BaseEntity{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "brand_id", nullable = false)
-    private Long brandId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "brand_id")
+    private BrandEntity brand;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false, length = 50)
@@ -38,4 +44,15 @@ public class ProductEntity extends BaseEntity{
     @Column(name = "product_price", nullable = true)
     private Integer productPrice;
 
+    public void updatePrice(Integer productPrice) {
+        this.productPrice = productPrice;
+    }
+
+    @Builder(builderClassName = "NewBuilder", builderMethodName = "NewBuilder")
+    public ProductEntity(ProductInsertDto insertDto, BrandEntity brandEntity) {
+        this.brand = brandEntity;
+        this.category = insertDto.getCategory();
+        this.productName = insertDto.getProductName();
+        this.productPrice = insertDto.getProductPrice();
+    }
 }

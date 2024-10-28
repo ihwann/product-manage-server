@@ -10,13 +10,22 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum Category {
     TOP("상의"),
-    BOTTOM("하의"),
     OUTER("아우터"),
-    SHOES("신발"),
-    SOCKS("양말"),
-    HAT("모자"),
+    BOTTOM("바지"),
+    SNEAKERS("스니커즈"),
     BAG("가방"),
+    HAT("모자"),
+    SOCKS("양말"),
     ACCESSORY("액세서리");
 
     private final String description;
+
+    public static Category findByName(String name) {
+        for (Category category : values()) {
+            if (category.name().equalsIgnoreCase(name)) {
+                return category;
+            }
+        }
+        throw new IllegalArgumentException("유효하지 않은 카테고리 입니다. : " + name);
+    }
 }

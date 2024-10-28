@@ -21,7 +21,7 @@ public class CommonExceptionHandler {
 
         BaseResponse<Object> response = BaseResponse.builder()
             .resultCode(BaseResponse.FAIL)
-            .data("해당 리소스를 찾을 수 없습니다.")
+            .data(exception.getMessage())
             .build();
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
