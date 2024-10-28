@@ -48,7 +48,7 @@ public class ProductEntity extends BaseEntity{
         this.productPrice = productPrice;
     }
 
-    @Builder(builderClassName = "NewBuilder", builderMethodName = "NewBuilder")
+    @Builder(builderClassName = "NewBuilder", builderMethodName = "newBuilder")
     public ProductEntity(ProductInsertDto insertDto, BrandEntity brandEntity) {
         this.brand = brandEntity;
         this.category = insertDto.getCategory();

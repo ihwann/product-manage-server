@@ -5,8 +5,10 @@ import com.musinsa.productmanageserver.common.type.Category;
 import com.musinsa.productmanageserver.common.util.MoneyUtil;
 import com.musinsa.productmanageserver.product.dto.external.response.BrandPriceResponse;
 import com.musinsa.productmanageserver.product.dto.external.response.LowestAndHighestPriceProduct;
-import com.musinsa.productmanageserver.product.dto.external.response.LowestPriceBrandsByCategoryResponse;
 import com.musinsa.productmanageserver.product.dto.external.response.LowestPriceBrandByCategory;
+import com.musinsa.productmanageserver.product.dto.external.response.LowestPriceBrandResponse;
+import com.musinsa.productmanageserver.product.dto.external.response.LowestPriceBrandsByCategoryResponse;
+import com.musinsa.productmanageserver.product.dto.internal.LowestBrandInfo;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
 import com.musinsa.productmanageserver.product.service.ProductQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,14 +64,14 @@ public class PriceComparisonController {
         List<BrandPriceResponse> lowestPriceBrandList = productQueryService.getLowestPriceAllProductByCategory(
                 category)
             .stream()
-            .map(productInfo -> new BrandPriceResponse(productInfo.getBrandInfo().getBrandName(),
+            .map(productInfo -> BrandPriceResponse.of(productInfo.getBrandInfo().getBrandName(),
                 productInfo.getProductPrice()))
             .toList();
 
         List<BrandPriceResponse> highestPriceBrandList = productQueryService.getHighestPriceAllProductByCategory(
                 category)
             .stream()
-            .map(productInfo -> new BrandPriceResponse(productInfo.getBrandInfo().getBrandName(),
+            .map(productInfo -> BrandPriceResponse.of(productInfo.getBrandInfo().getBrandName(),
                 productInfo.getProductPrice()))
             .toList();
 
@@ -79,5 +81,16 @@ public class PriceComparisonController {
                     category,
                     lowestPriceBrandList,
                     highestPriceBrandList)));
+    }
+
+    @Operation(summary = "최저가격에 판매하는 브랜드와 카테고리별 상품 가격 조회", description = "카최저가격에 판매하는 브랜드와 카테고리별 상품 가격 조회합니다.")
+    @GetMapping("/lowest-price-brand")
+    public ResponseEntity<BaseResponse<LowestPriceBrandResponse>> getLowestPriceBrand() {
+
+        LowestBrandInfo lowestPriceBrand = productQueryService.getLowestPriceBrand();
+
+        return ResponseEntity.ok(
+            new BaseResponse<>(BaseResponse.SUCCESS,
+                new LowestPriceBrandResponse(lowestPriceBrand)));
     }
 }

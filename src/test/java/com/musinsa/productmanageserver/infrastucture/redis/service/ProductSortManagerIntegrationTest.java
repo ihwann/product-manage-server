@@ -18,10 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ProductCacheServiceImplIntegrationTest {
+class ProductSortManagerIntegrationTest {
 
     @Autowired
-    private ProductCacheServiceImpl productCacheServiceImpl;
+    private ProductSortManager productSortManager;
 
     @Autowired
     private ProductRepository productRepository;
@@ -56,45 +56,33 @@ class ProductCacheServiceImplIntegrationTest {
 
     @Test
     void test0() {
-        productInfoList.forEach(productCacheServiceImpl::addToCategorySet);
+        productInfoList.forEach(productSortManager::addToCategorySet);
         //productInfoList.forEach(productCacheServiceImpl::addToBrandCategorySet);
         System.out.println("==================================");
     }
 
     @Test
     void test() {
-        productInfoList.forEach(productCacheServiceImpl::addToCategorySet);
-        productInfoList.forEach(productCacheServiceImpl::addToBrandCategorySet);
+        productInfoList.forEach(productSortManager::addToCategorySet);
+        productInfoList.forEach(productSortManager::addToBrandCategorySet);
         System.out.println("==================================");
     }
 
     @Test
     void test2() throws JsonProcessingException {
-        ProductInfo product = ProductInfo.builder()
-            .productId(1L)
-            .build();
-        ProductInfo product2 = ProductInfo.builder()
-            .productId(2L)
-            .build();
-        ProductInfo product3 = ProductInfo.builder()
-            .productId(3L)
-            .build();
 
-        redisCommandComponent.getScoredSortedSet("test")
-            .add(1, objectMapper.writeValueAsString(product));
-        redisCommandComponent.getScoredSortedSet("test")
-            .add(2, objectMapper.writeValueAsString(product));
+        RScoredSortedSet<String> set = redisCommandComponent.getScoredSortedSet("test");
+        set.add(100, "1");
+        set.add(200, "2");
+        set.add(300, "1");
 
-        Object test = redisCommandComponent.getScoredSortedSet("test").first();
-        Long productId = objectMapper.readValue(test.toString(), ProductInfo.class).getProductId();
-
-        System.out.println("==================================");
+        System.out.println("=====");
     }
 
     @Test
     void test3() throws JsonProcessingException {
-        productInfoList.forEach(productCacheServiceImpl::addToCategorySet);
-        productInfoList.forEach(productCacheServiceImpl::addToBrandCategorySet);
+        productInfoList.forEach(productSortManager::addToCategorySet);
+        productInfoList.forEach(productSortManager::addToBrandCategorySet);
 
         brandInfoList.forEach(brandInfo -> {
             int lowestBrandPrice = Arrays.stream(Category.values())
@@ -107,7 +95,7 @@ class ProductCacheServiceImplIntegrationTest {
                 .mapToInt(Double::intValue)
                 .sum();
 
-            productCacheServiceImpl.addToBrandSet(brandInfo.getBrandName(), lowestBrandPrice);
+            productSortManager.addToBrandSet(brandInfo.getBrandName(), lowestBrandPrice);
         });
 
         System.out.println("==================================");

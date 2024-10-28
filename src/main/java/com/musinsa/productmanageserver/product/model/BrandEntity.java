@@ -1,5 +1,6 @@
 package com.musinsa.productmanageserver.product.model;
 
+import com.musinsa.productmanageserver.product.dto.internal.BrandInsertDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -7,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,4 +27,12 @@ public class BrandEntity extends BaseEntity{
     @Column(name = "brand_name", nullable = false, length = 100)
     private String brandName;
 
+    @Builder(builderClassName = "NewBuilder", builderMethodName = "newBuilder")
+    public BrandEntity(BrandInsertDto insertDto) {
+        this.brandName = insertDto.getBrandName();
+    }
+
+    public void updateBrandName(String brandName) {
+        this.brandName = brandName;
+    }
 }

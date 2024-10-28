@@ -2,7 +2,7 @@ package com.musinsa.productmanageserver.infrastucture.redis.component;
 
 import com.musinsa.productmanageserver.common.type.Category;
 import com.musinsa.productmanageserver.common.util.RedisKeyGenerator;
-import com.musinsa.productmanageserver.infrastucture.redis.service.ProductCacheServiceImpl;
+import com.musinsa.productmanageserver.infrastucture.redis.service.ProductSortManager;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
 import com.musinsa.productmanageserver.product.repository.BrandRepository;
 import com.musinsa.productmanageserver.product.repository.ProductRepository;
@@ -19,7 +19,7 @@ public class SetupCacheComponent {
 
     private final ProductRepository productRepository;
     private final BrandRepository brandRepository;
-    private final ProductCacheServiceImpl productCacheService;
+    private final ProductSortManager productCacheService;
     private final RedisCommandComponent redisCommandComponent;
 
     @PostConstruct

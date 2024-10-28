@@ -1,6 +1,9 @@
 package com.musinsa.productmanageserver.product.service;
 
 import com.musinsa.productmanageserver.exception.NotFoundResourceException;
+import com.musinsa.productmanageserver.product.dto.internal.BrandInfo;
+import com.musinsa.productmanageserver.product.dto.internal.BrandInsertDto;
+import com.musinsa.productmanageserver.product.dto.internal.BrandUpdateDto;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInsertDto;
 import com.musinsa.productmanageserver.product.dto.internal.ProductUpdateDto;
@@ -86,7 +89,7 @@ public class ProductCommandService {
     private ProductEntity newProductEntity(ProductInsertDto productInsertDto,
         BrandEntity brandEntity) {
 
-        return ProductEntity.NewBuilder()
+        return ProductEntity.newBuilder()
             .insertDto(productInsertDto)
             .brandEntity(brandEntity)
             .build();
@@ -95,5 +98,61 @@ public class ProductCommandService {
 
     public ProductEntity saveProductEntity(ProductEntity product) {
         return productRepository.save(product);
+    }
+
+    /**
+     * 브랜드 추가
+     *
+     * @param insertDto 브랜드 추가 요청
+     * @return 추가된 브랜드 정보
+     */
+    @Transactional
+    public BrandInfo addBrand(BrandInsertDto insertDto) {
+        BrandEntity brandEntity = BrandEntity.newBuilder()
+            .insertDto(insertDto)
+            .build();
+
+        saveBrandEntity(brandEntity);
+
+        return BrandInfo.fromEntityBuilder()
+            .entity(brandEntity)
+            .build();
+    }
+
+    /**
+     * 브랜드 정보 수정
+     *
+     * @param updateDto 브랜드 수정 요청
+     * @return 수정된 브랜드 정보
+     */
+    @Transactional
+    public BrandInfo updateBrand(BrandUpdateDto updateDto) {
+        BrandEntity brandEntity = brandRepository.findById(updateDto.getBrandId())
+            .map(brand -> {
+                brand.updateBrandName(updateDto.getBrandName());
+                return saveBrandEntity(brand);
+            })
+            .orElseThrow(() -> new NotFoundResourceException(HttpStatus.NOT_FOUND,
+                "브랜드가 존재하지 않습니다. 브랜드 ID: " + updateDto.getBrandId()));
+
+        return BrandInfo.fromEntityBuilder()
+            .entity(brandEntity)
+            .build();
+    }
+
+    /**
+     * 브랜드 삭제
+     *
+     * @param brandId 브랜드 ID
+     */
+    @Transactional
+    public void deleteBrand(Long brandId) {
+        brandRepository.findById(brandId)
+            .ifPresent(brandRepository::delete);
+    }
+
+
+    public BrandEntity saveBrandEntity(BrandEntity brand) {
+        return brandRepository.save(brand);
     }
 }

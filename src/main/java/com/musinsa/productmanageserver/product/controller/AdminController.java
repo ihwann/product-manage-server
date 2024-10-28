@@ -1,9 +1,15 @@
 package com.musinsa.productmanageserver.product.controller;
 
 import com.musinsa.productmanageserver.common.dto.BaseResponse;
+import com.musinsa.productmanageserver.product.dto.external.request.BrandInsertRequest;
+import com.musinsa.productmanageserver.product.dto.external.request.BrandUpdateRequest;
 import com.musinsa.productmanageserver.product.dto.external.request.ProductInsertRequest;
 import com.musinsa.productmanageserver.product.dto.external.request.ProductUpdateRequest;
+import com.musinsa.productmanageserver.product.dto.external.response.BrandResponse;
 import com.musinsa.productmanageserver.product.dto.external.response.ProductResponse;
+import com.musinsa.productmanageserver.product.dto.internal.BrandInfo;
+import com.musinsa.productmanageserver.product.dto.internal.BrandInsertDto;
+import com.musinsa.productmanageserver.product.dto.internal.BrandUpdateDto;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInsertDto;
 import com.musinsa.productmanageserver.product.dto.internal.ProductUpdateDto;
@@ -71,25 +77,58 @@ public class AdminController {
         @Parameter(name = "id", description = "상품 ID", required = true, in = ParameterIn.PATH)
         @PathVariable("id") Long id
     ) {
+
         productCommandService.deleteProduct(id);
+
         return ResponseEntity.ok(new BaseResponse(BaseResponse.SUCCESS, null));
     }
 
     @Operation(summary = "브랜드 추가", description = "브랜드를 추가합니다.")
     @PostMapping("/brands")
-    public ResponseEntity<BaseResponse> addBrand() {
-        return ResponseEntity.ok(new BaseResponse(BaseResponse.SUCCESS, null));
+    public ResponseEntity<BaseResponse<BrandResponse>> addBrand(
+        @Parameter(description = "브랜드 정보", required = true)
+        @RequestBody BrandInsertRequest brandInsertRequest
+    ) {
+
+        BrandInsertDto insertDto = BrandInsertDto.fromRequestBuilder()
+            .insertRequest(brandInsertRequest)
+            .build();
+
+        BrandInfo brandInfo = productCommandService.addBrand(insertDto);
+
+        return ResponseEntity.ok(
+            new BaseResponse<>(BaseResponse.SUCCESS, BrandResponse.from(brandInfo)));
     }
 
     @Operation(summary = "브랜드 수정", description = "브랜드를 수정합니다.")
-    @PutMapping("/brands")
-    public ResponseEntity<BaseResponse> updateBrand() {
-        return ResponseEntity.ok(new BaseResponse(BaseResponse.SUCCESS, null));
+    @PutMapping("/brands/{id}")
+    public ResponseEntity<BaseResponse<BrandResponse>> updateBrand(
+        @Parameter(name = "id", description = "브랜드 ID", required = true, in = ParameterIn.PATH)
+        @PathVariable("id") Long id,
+        @Parameter(description = "브랜드 정보", required = true)
+        @RequestBody BrandUpdateRequest brandUpdateRequest
+    ) {
+
+        BrandUpdateDto updateDto = BrandUpdateDto.fromRequestBuilder()
+            .brandId(id)
+            .updateRequest(brandUpdateRequest)
+            .build();
+
+        BrandInfo brandInfo = productCommandService.updateBrand(updateDto);
+
+        return ResponseEntity.ok(
+            new BaseResponse<>(BaseResponse.SUCCESS, BrandResponse.from(brandInfo)));
     }
 
     @Operation(summary = "브랜드 삭제", description = "브랜드를 삭제합니다.")
-    @DeleteMapping("/brands")
-    public ResponseEntity<BaseResponse> deleteBrand() {
+    @DeleteMapping("/brands/{id}")
+    public ResponseEntity<BaseResponse> deleteBrand(
+        @Parameter(name = "id", description = "브랜드 ID", required = true, in = ParameterIn.PATH)
+        @PathVariable("id") Long id
+    ) {
+
+        productCommandService.deleteBrand(id);
+
         return ResponseEntity.ok(new BaseResponse(BaseResponse.SUCCESS, null));
     }
 }

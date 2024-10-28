@@ -1,22 +1,22 @@
 package com.musinsa.productmanageserver.infrastucture.redis.service;
 
 import com.musinsa.productmanageserver.common.type.Category;
-import com.musinsa.productmanageserver.common.util.DataParser;
 import com.musinsa.productmanageserver.common.util.RedisKeyGenerator;
 import com.musinsa.productmanageserver.infrastucture.redis.component.RedisCommandComponent;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RScoredSortedSet;
+import org.redisson.client.protocol.ScoredEntry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ProductCacheServiceImpl{
+public class ProductSortManager {
 
     private final RedisCommandComponent redisCommandComponent;
-    private final DataParser dataParser;
 
     @Value("${redis.key.price-sorted-set.brand}")
     private String priceSortedSetBrandKey;
@@ -30,9 +30,9 @@ public class ProductCacheServiceImpl{
     /**
      * 카테고리별 최고가 모든 상품 조회
      * @param category 카테고리
-     * @return 카테고리별 최고가 모든 상품
+     * @return 카테고리별 최고가 모든 상품id
      */
-    public List<ProductInfo> getHighestPriceAllProductByCategory(Category category) {
+    public List<String> getHighestPriceAllProductByCategory(Category category) {
 
         String categoryKey = RedisKeyGenerator.generateKey(priceSortedSetCategoryKey,
             category.name());
@@ -42,16 +42,15 @@ public class ProductCacheServiceImpl{
 
         return scoredSortedSet.valueRange(lastScore, true, lastScore, true)
             .stream()
-            .map(this::parseToProductInfo)
             .toList();
     }
 
     /**
      * 카테고리별 최저가 모든 상품 조회
      * @param category 카테고리
-     * @return 카테고리별 최저가 모든 상품
+     * @return 카테고리별 최저가 모든 상품id
      */
-    public List<ProductInfo> getLowestPriceAllProductByCategory(Category category) {
+    public List<String> getLowestPriceAllProductByCategory(Category category) {
 
         String categoryKey = RedisKeyGenerator.generateKey(priceSortedSetCategoryKey,
             category.name());
@@ -61,7 +60,6 @@ public class ProductCacheServiceImpl{
 
         return scoredSortedSet.valueRange(firstScore, true, firstScore, true)
             .stream()
-            .map(this::parseToProductInfo)
             .toList();
     }
 
@@ -69,16 +67,43 @@ public class ProductCacheServiceImpl{
     /**
      * 카테고리별 최저가 상품 조회
      * @param category 카테고리
-     * @return 카테고리별 최저가 상품
+     * @return 카테고리별 최저가 상품id
      */
-    public ProductInfo getLowestPriceProductByCategory(Category category) {
+    public String getLowestPriceProductByCategory(Category category) {
 
         String categoryKey = RedisKeyGenerator.generateKey(priceSortedSetCategoryKey,
             category.name());
 
-        RScoredSortedSet scoredSortedSet = getScoredSortedSet(categoryKey);
+        RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(categoryKey);
 
-        return parseToProductInfo(scoredSortedSet.first());
+        return scoredSortedSet.first();
+    }
+
+    /**
+     * 최저가 브랜드 조회
+     * @return 최저가 브랜드
+     */
+    public Optional<ScoredEntry<String>> getLowestPriceBrand() {
+        String brandKey = RedisKeyGenerator.generateKey(priceSortedSetBrandKey);
+
+        RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(brandKey);
+
+        return Optional.ofNullable(scoredSortedSet.firstEntry());
+    }
+
+    /**
+     * 브랜드와 카테고리별 최저가 상품 조회
+     * @param brandName 브랜드 이름
+     * @param category 카테고리
+     * @return 브랜드와 카테고리별 최저가 상품
+     */
+    public String getLowestPriceProductByBrandCategory(String brandName, Category category) {
+        String brandCategoryKey = RedisKeyGenerator.generateKey(priceSortedSetBrandCategoryKey,
+            brandName, category.name());
+
+        RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(brandCategoryKey);
+
+        return scoredSortedSet.first();
     }
 
 
@@ -100,7 +125,7 @@ public class ProductCacheServiceImpl{
             productInfo.getCategory().name());
 
         getScoredSortedSet(categoryKey)
-            .add(productInfo.getProductPrice(), dataParser.parseToString(productInfo));
+            .add(productInfo.getProductPrice(), String.valueOf(productInfo.getProductId()));
     }
 
 
@@ -112,7 +137,7 @@ public class ProductCacheServiceImpl{
             productInfo.getBrandInfo().getBrandName(), productInfo.getCategory().name());
 
         getScoredSortedSet(brandCategoryKey)
-            .add(productInfo.getProductPrice(), dataParser.parseToString(productInfo));
+            .add(productInfo.getProductPrice(), String.valueOf(productInfo.getProductId()));
     }
 
     /**
@@ -122,14 +147,5 @@ public class ProductCacheServiceImpl{
         String brandKey = RedisKeyGenerator.generateKey(priceSortedSetBrandKey);
 
         getScoredSortedSet(brandKey).add(brandPrice, brandName);
-    }
-
-    /**
-     * 상품 정보로 변환
-     * @param item 상품 정보
-     * @return 상품 정보
-     */
-    private ProductInfo parseToProductInfo(Object item) {
-        return dataParser.parse(item.toString(), ProductInfo.class);
     }
 }
