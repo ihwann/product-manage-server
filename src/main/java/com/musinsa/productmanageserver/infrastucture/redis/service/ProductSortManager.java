@@ -131,13 +131,14 @@ public class ProductSortManager {
 
     /**
      * 브랜드-카테고리별 최저가 세트에 상품 추가
+     * @return 추가된 상품의 브랜드-카테고리 랭크
      */
-    public void addToBrandCategorySet(ProductInfo productInfo) {
+    public Integer addAndGetRankBrandCategorySet(ProductInfo productInfo) {
         String brandCategoryKey = RedisKeyGenerator.generateKey(priceSortedSetBrandCategoryKey,
             productInfo.getBrandInfo().getBrandName(), productInfo.getCategory().name());
 
-        getScoredSortedSet(brandCategoryKey)
-            .add(productInfo.getProductPrice(), String.valueOf(productInfo.getProductId()));
+        return getScoredSortedSet(brandCategoryKey)
+            .addAndGetRank(productInfo.getProductPrice(), String.valueOf(productInfo.getProductId()));
     }
 
     /**

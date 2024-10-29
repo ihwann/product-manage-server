@@ -1,5 +1,6 @@
 package com.musinsa.productmanageserver.product.service;
 
+import com.musinsa.productmanageserver.event.message.ProductInsertEvent;
 import com.musinsa.productmanageserver.exception.NotFoundResourceException;
 import com.musinsa.productmanageserver.product.dto.internal.BrandInfo;
 import com.musinsa.productmanageserver.product.dto.internal.BrandInsertDto;
@@ -12,6 +13,7 @@ import com.musinsa.productmanageserver.product.model.ProductEntity;
 import com.musinsa.productmanageserver.product.repository.BrandRepository;
 import com.musinsa.productmanageserver.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ public class ProductCommandService {
 
     private final ProductRepository productRepository;
     private final BrandRepository brandRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * 상품 수정
@@ -154,5 +157,10 @@ public class ProductCommandService {
 
     public BrandEntity saveBrandEntity(BrandEntity brand) {
         return brandRepository.save(brand);
+    }
+
+    @Transactional
+    public void publish(ProductInfo productInfo) {
+        applicationEventPublisher.publishEvent(new ProductInsertEvent(productInfo));
     }
 }

@@ -1,53 +1,35 @@
 package com.musinsa.productmanageserver.infrastucture.redis.component;
 
-import com.musinsa.productmanageserver.common.type.Category;
-import com.musinsa.productmanageserver.common.util.RedisKeyGenerator;
-import com.musinsa.productmanageserver.infrastucture.redis.service.ProductSortManager;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
-import com.musinsa.productmanageserver.product.repository.BrandRepository;
 import com.musinsa.productmanageserver.product.repository.ProductRepository;
+import com.musinsa.productmanageserver.product.service.ProductCommandService;
 import jakarta.annotation.PostConstruct;
-import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.redisson.api.RScoredSortedSet;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
 public class SetupCacheComponent {
 
     private final ProductRepository productRepository;
-    private final BrandRepository brandRepository;
-    private final ProductSortManager productCacheService;
-    private final RedisCommandComponent redisCommandComponent;
+    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ProductCommandService productCommandService;
 
     @PostConstruct
-    @Transactional(readOnly = true)
     public void setup() {
-        productRepository.findAllWithBrand()
+        List<ProductInfo> productInfoList = productRepository.findAllWithBrand()
             .stream()
             .map(entity -> ProductInfo.fromEntityBuilder()
                 .entity(entity)
                 .build())
-            .forEach(productInfo -> {
-                productCacheService.addToCategorySet(productInfo);
-                productCacheService.addToBrandCategorySet(productInfo);
-            });
+            .toList();
 
-        brandRepository.findAll()
-            .forEach(brandInfo -> {
-                int lowestBrandPrice = Arrays.stream(Category.values())
-                    .map(category -> RedisKeyGenerator.generateKey(
-                        "price-sorted-set-by-brand-category",
-                        brandInfo.getBrandName(),
-                        category.name()))
-                    .map(redisCommandComponent::getScoredSortedSet)
-                    .map(RScoredSortedSet::firstScore)
-                    .mapToInt(Double::intValue)
-                    .sum();
+        productInfoList.forEach(this::publish);
+    }
 
-                productCacheService.addToBrandSet(brandInfo.getBrandName(), lowestBrandPrice);
-            });
+    public void publish(ProductInfo productInfo) {
+        productCommandService.publish(productInfo);
     }
 }

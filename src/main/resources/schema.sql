@@ -16,6 +16,6 @@ create table product_info
     category      varchar(50)  not null comment '카테고리',
     product_name  varchar(100) not null comment '제품명',
     product_price int          null comment '제품 가격',
-    foreign key (brand_id) references brand_info (brand_id)
+    foreign key (brand_id) references brand_info (brand_id) on delete cascade
 )
 ;
