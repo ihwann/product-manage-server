@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.ObjectUtils;
 import org.redisson.client.protocol.ScoredEntry;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -35,6 +34,7 @@ public class ProductQueryService {
 
         return Arrays.stream(Category.values())
             .map(productSortManager::getLowestPriceProductByCategory)
+            .flatMap(Optional::stream)
             .map(productId -> findProductInfo(Long.parseLong(productId)))
             .flatMap(Optional::stream)
             .toList();
@@ -101,6 +101,7 @@ public class ProductQueryService {
         return Arrays.stream(Category.values())
             .map(category -> productSortManager.getLowestPriceProductByBrandCategory(
                 brandName, category))
+            .flatMap(Optional::stream)
             .map(productId -> findProductInfo(Long.parseLong(productId)))
             .flatMap(Optional::stream)
             .map(productInfo -> CategoryPriceInfo.fromProductInfoBuilder()

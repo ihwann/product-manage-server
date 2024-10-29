@@ -11,16 +11,9 @@ import com.musinsa.productmanageserver.product.repository.BrandRepository;
 import com.musinsa.productmanageserver.product.repository.ProductRepository;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RScoredSortedSet;
-import org.redisson.api.RStream;
-import org.redisson.api.StreamMessageId;
-import org.redisson.api.stream.StreamCreateGroupArgs;
-import org.redisson.api.stream.StreamReadGroupArgs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 

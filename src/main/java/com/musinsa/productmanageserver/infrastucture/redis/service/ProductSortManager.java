@@ -4,6 +4,7 @@ import com.musinsa.productmanageserver.common.type.Category;
 import com.musinsa.productmanageserver.common.util.RedisKeyGenerator;
 import com.musinsa.productmanageserver.infrastucture.redis.component.RedisCommandComponent;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -69,14 +70,16 @@ public class ProductSortManager {
      * @param category 카테고리
      * @return 카테고리별 최저가 상품id
      */
-    public String getLowestPriceProductByCategory(Category category) {
+    public Optional<String> getLowestPriceProductByCategory(Category category) {
 
         String categoryKey = RedisKeyGenerator.generateKey(priceSortedSetCategoryKey,
             category.name());
 
         RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(categoryKey);
 
-        return scoredSortedSet.first();
+        return Optional.ofNullable(getScoredSortedSet(categoryKey))
+            .filter(set -> !set.isEmpty())
+            .map(RScoredSortedSet::first);
     }
 
     /**
@@ -95,15 +98,17 @@ public class ProductSortManager {
      * 브랜드와 카테고리별 최저가 상품 조회
      * @param brandName 브랜드 이름
      * @param category 카테고리
-     * @return 브랜드와 카테고리별 최저가 상품
+     * @return 브랜드와 카테고리별 최저가 상품id
      */
-    public String getLowestPriceProductByBrandCategory(String brandName, Category category) {
+    public Optional<String> getLowestPriceProductByBrandCategory(String brandName, Category category) {
         String brandCategoryKey = RedisKeyGenerator.generateKey(priceSortedSetBrandCategoryKey,
             brandName, category.name());
 
         RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(brandCategoryKey);
 
-        return scoredSortedSet.first();
+        return Optional.ofNullable(getScoredSortedSet(brandCategoryKey))
+            .filter(set -> !set.isEmpty())
+            .map(RScoredSortedSet::first);
     }
 
 
@@ -148,5 +153,63 @@ public class ProductSortManager {
         String brandKey = RedisKeyGenerator.generateKey(priceSortedSetBrandKey);
 
         getScoredSortedSet(brandKey).add(brandPrice, brandName);
+    }
+
+    /**
+     * 브랜드별 최저가 세트 갱신
+     * @param brandName 브랜드 이름
+     */
+    public void refreshBrandCategorySet(String brandName) {
+        int totalPriceOfBrand = Arrays.stream(Category.values())
+            .map(category -> getLowestPriceProductPriceByBrandCategory(brandName, category))
+            .flatMap(Optional::stream)
+            .mapToInt(Integer::intValue)
+            .sum();
+
+        String brandKey = RedisKeyGenerator.generateKey(priceSortedSetBrandKey);
+
+        if (totalPriceOfBrand == 0) {
+            getScoredSortedSet(brandKey).remove(brandName);
+        } else {
+            getScoredSortedSet(brandKey).add(totalPriceOfBrand, brandName);
+        }
+    }
+
+    /**
+     * 브랜드와 카테고리별 최저가 상품 조회
+     * @param brandName 브랜드 이름
+     * @param category 카테고리
+     * @return 브랜드와 카테고리별 최저가 상품 가격
+     */
+    public Optional<Integer> getLowestPriceProductPriceByBrandCategory(String brandName,
+        Category category) {
+        String brandCategoryKey = RedisKeyGenerator.generateKey(priceSortedSetBrandCategoryKey,
+            brandName, category.name());
+
+        return Optional.ofNullable(getScoredSortedSet(brandCategoryKey))
+            .filter(set -> !set.isEmpty())
+            .map(set -> set.firstScore().intValue());
+    }
+
+    /**
+     * 카테고리별 최저가 상품 삭제
+     * @param productInfo 상품 정보
+     */
+    public void deleteFromCategorySet(ProductInfo productInfo) {
+        String categoryKey = RedisKeyGenerator.generateKey(priceSortedSetCategoryKey,
+            productInfo.getCategory().name());
+
+        getScoredSortedSet(categoryKey).remove(String.valueOf(productInfo.getProductId()));
+    }
+
+    /**
+     * 브랜드-카테고리별 최저가 상품 삭제
+     * @param productInfo 상품 정보
+     */
+    public void deleteAndGetRankBrandCategorySet(ProductInfo productInfo) {
+        String brandCategoryKey = RedisKeyGenerator.generateKey(priceSortedSetBrandCategoryKey,
+            productInfo.getBrandInfo().getBrandName(), productInfo.getCategory().name());
+
+        getScoredSortedSet(brandCategoryKey).remove(String.valueOf(productInfo.getProductId()));
     }
 }

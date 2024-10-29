@@ -1,6 +1,8 @@
 package com.musinsa.productmanageserver.product.service;
 
+import com.musinsa.productmanageserver.event.message.ProductDeleteEvent;
 import com.musinsa.productmanageserver.event.message.ProductInsertEvent;
+import com.musinsa.productmanageserver.event.message.ProductUpdateEvent;
 import com.musinsa.productmanageserver.exception.NotFoundResourceException;
 import com.musinsa.productmanageserver.product.dto.internal.BrandInfo;
 import com.musinsa.productmanageserver.product.dto.internal.BrandInsertDto;
@@ -12,6 +14,7 @@ import com.musinsa.productmanageserver.product.model.BrandEntity;
 import com.musinsa.productmanageserver.product.model.ProductEntity;
 import com.musinsa.productmanageserver.product.repository.BrandRepository;
 import com.musinsa.productmanageserver.product.repository.ProductRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -45,9 +48,13 @@ public class ProductCommandService {
             .orElseThrow(() -> new NotFoundResourceException(HttpStatus.NOT_FOUND,
                 "상품이 존재하지 않습니다. 상품 ID: " + updateDto.getProductId()));
 
-        return ProductInfo.fromEntityBuilder()
+        ProductInfo productInfo = ProductInfo.fromEntityBuilder()
             .entity(productEntity)
             .build();
+
+        publishUpdateProductEvent(productInfo);
+
+        return productInfo;
     }
 
     /**
@@ -58,7 +65,13 @@ public class ProductCommandService {
     @Transactional
     public void deleteProduct(Long productId) {
         productRepository.findById(productId)
-            .ifPresent(productRepository::delete);
+            .ifPresent(productEntity -> {
+                productRepository.delete(productEntity);
+
+                publishDeleteProductEvent(ProductInfo.fromEntityBuilder()
+                    .entity(productEntity)
+                    .build());
+            });
     }
 
     /**
@@ -71,15 +84,19 @@ public class ProductCommandService {
     public ProductInfo addProduct(ProductInsertDto productInsertDto) {
         BrandEntity brandEntity = brandRepository.findById(productInsertDto.getBrandId())
             .orElseThrow(() -> new NotFoundResourceException(HttpStatus.NOT_FOUND,
-                "브랜드가 존재하지 않습니다. 브랜드 ID: " + productInsertDto.getBrandId()));
+                "브랜드가 존재하지 않습니다."));
 
         ProductEntity productEntity = newProductEntity(productInsertDto, brandEntity);
 
         saveProductEntity(productEntity);
 
-        return ProductInfo.fromEntityBuilder()
+        ProductInfo productInfo = ProductInfo.fromEntityBuilder()
             .entity(productEntity)
             .build();
+
+        publishInsertProductEvent(productInfo);
+
+        return productInfo;
     }
 
     /**
@@ -136,7 +153,7 @@ public class ProductCommandService {
                 return saveBrandEntity(brand);
             })
             .orElseThrow(() -> new NotFoundResourceException(HttpStatus.NOT_FOUND,
-                "브랜드가 존재하지 않습니다. 브랜드 ID: " + updateDto.getBrandId()));
+                "브랜드가 존재하지 않습니다."));
 
         return BrandInfo.fromEntityBuilder()
             .entity(brandEntity)
@@ -151,7 +168,20 @@ public class ProductCommandService {
     @Transactional
     public void deleteBrand(Long brandId) {
         brandRepository.findById(brandId)
-            .ifPresent(brandRepository::delete);
+            .ifPresentOrElse(
+                brandEntity -> {
+                    brandRepository.delete(brandEntity);
+
+                    productRepository.findAllByBrandId(brandId)
+                        .forEach(productEntity -> publishDeleteProductEvent(
+                            ProductInfo.fromEntityBuilder()
+                                .entity(productEntity)
+                                .build()));
+                },
+                () -> {
+                    throw new NotFoundResourceException(HttpStatus.NOT_FOUND,
+                        "브랜드가 존재하지 않습니다.");
+                });
     }
 
 
@@ -160,7 +190,17 @@ public class ProductCommandService {
     }
 
     @Transactional
-    public void publish(ProductInfo productInfo) {
+    public void publishInsertProductEvent(ProductInfo productInfo) {
         applicationEventPublisher.publishEvent(new ProductInsertEvent(productInfo));
+    }
+
+    @Transactional
+    public void publishUpdateProductEvent(ProductInfo productInfo) {
+        applicationEventPublisher.publishEvent(new ProductUpdateEvent(productInfo));
+    }
+
+    @Transactional
+    public void publishDeleteProductEvent(ProductInfo productInfo) {
+        applicationEventPublisher.publishEvent(new ProductDeleteEvent(productInfo));
     }
 }

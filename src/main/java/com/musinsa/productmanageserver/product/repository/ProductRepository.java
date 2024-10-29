@@ -18,4 +18,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     @Query("SELECT p FROM ProductEntity p JOIN FETCH p.brand")
     List<ProductEntity> findAllWithBrand();
 
+    List<ProductEntity> findAllByBrandId(Long brandId);
+
 }
