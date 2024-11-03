@@ -31,30 +31,30 @@ public class PriceComparisonController {
 
     @Operation(summary = "카테고리별 최저가격 브랜드와 총액 조회", description = "카테고리별 최저가격 브랜드와 총액 조회합니다.")
     @GetMapping("/categories/prices/lowest")
-    public ResponseEntity<BaseResponse<LowestPriceBrandsByCategoryResponse>> getCheapestBrandsByCategory(
+    public ResponseEntity<BaseResponse<LowestPriceBrandsByCategoryResponse>> getLowestPriceBrandByCategory(
     ) {
 
-        List<ProductInfo> cheapestProductCategory = productQueryService.getLowestPriceBrandsByCategory();
+        List<ProductInfo> lowestPriceProductInfoList = productQueryService.getLowestPriceBrandsByCategory();
 
-        List<LowestPriceBrandByCategory> cheapestBrandsByCategory = cheapestProductCategory.stream()
+        List<LowestPriceBrandByCategory> lowestPriceBrandsByCategory = lowestPriceProductInfoList.stream()
             .map(productInfo -> LowestPriceBrandByCategory.fromProductInfoBuilder()
                 .productInfo(productInfo)
                 .build())
             .toList();
 
-        int totalPrice = cheapestProductCategory.stream()
+        int totalPrice = lowestPriceProductInfoList.stream()
             .mapToInt(ProductInfo::getProductPrice)
             .sum();
 
         return ResponseEntity.ok(
             new BaseResponse<>(BaseResponse.SUCCESS,
-                new LowestPriceBrandsByCategoryResponse(cheapestBrandsByCategory,
+                new LowestPriceBrandsByCategoryResponse(lowestPriceBrandsByCategory,
                     MoneyUtil.convertStringFormat(totalPrice))));
     }
 
     @Operation(summary = "카테고리 이름으로 최저, 최고 가격 브랜드와 상품 가격 조회", description = "카테고리 이름으로 최저, 최고 가격 브랜드와 상품 가격을 조회합니다.")
     @GetMapping("/categories/{category}/prices/lowest-and-highest")
-    public ResponseEntity<BaseResponse<LowestAndHighestPriceProduct>> getCheapestBrandsByCategory(
+    public ResponseEntity<BaseResponse<LowestAndHighestPriceProduct>> getLowestAndHighestPriceBrandByCategory(
         @Parameter(name = "category", description = "카테고리 이름", required = true, in = ParameterIn.PATH)
         @PathVariable("category") String categoryName
     ) {

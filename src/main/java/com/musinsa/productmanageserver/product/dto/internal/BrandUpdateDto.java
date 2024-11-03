@@ -17,4 +17,10 @@ public class BrandUpdateDto {
         this.brandId = brandId;
         this.brandName = updateRequest.brandName();
     }
+
+    @Builder
+    public BrandUpdateDto(Long brandId, String brandName) {
+        this.brandId = brandId;
+        this.brandName = brandName;
+    }
 }

@@ -2,6 +2,7 @@ package com.musinsa.productmanageserver.product.model;
 
 
 import com.musinsa.productmanageserver.common.type.Category;
+import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInsertDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -54,5 +55,13 @@ public class ProductEntity extends BaseEntity{
         this.category = insertDto.getCategory();
         this.productName = insertDto.getProductName();
         this.productPrice = insertDto.getProductPrice();
+    }
+
+    @Builder(builderClassName = "FromDtoBuilder", builderMethodName = "fromDtoBuilder")
+    public ProductEntity(ProductInfo productInfo) {
+        this.id = productInfo.getProductId();
+        this.category = productInfo.getCategory();
+        this.productName = productInfo.getProductName();
+        this.productPrice = productInfo.getProductPrice();
     }
 }

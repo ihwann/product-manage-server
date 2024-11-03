@@ -1,8 +1,8 @@
 package com.musinsa.productmanageserver.infrastucture.redis.component;
 
+import com.musinsa.productmanageserver.event.component.ProductEventPublisher;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
 import com.musinsa.productmanageserver.product.repository.ProductRepository;
-import com.musinsa.productmanageserver.product.service.ProductCommandService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
@@ -14,10 +14,10 @@ import org.springframework.stereotype.Component;
 public class WarmUpCacheComponent implements ApplicationRunner {
 
     private final ProductRepository productRepository;
-    private final ProductCommandService productCommandService;
+    private final ProductEventPublisher productEventPublisher;
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
+    public void run(ApplicationArguments args) {
         List<ProductInfo> productInfoList = productRepository.findAllWithBrand()
             .stream()
             .map(entity -> ProductInfo.fromEntityBuilder()
@@ -29,6 +29,6 @@ public class WarmUpCacheComponent implements ApplicationRunner {
     }
 
     public void publish(ProductInfo productInfo) {
-        productCommandService.publishInsertProductEvent(productInfo);
+        productEventPublisher.publishInsertProductEvent(productInfo);
     }
 }

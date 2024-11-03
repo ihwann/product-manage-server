@@ -17,4 +17,9 @@ public class BrandInsertDto {
     public BrandInsertDto(BrandInsertRequest insertRequest) {
         this.brandName = insertRequest.brandName();
     }
+
+    @Builder
+    public BrandInsertDto(String brandName) {
+        this.brandName = brandName;
+    }
 }

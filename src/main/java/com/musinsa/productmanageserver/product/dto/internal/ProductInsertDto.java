@@ -22,4 +22,12 @@ public class ProductInsertDto {
         this.productName = request.productName();
         this.productPrice = request.productPrice();
     }
+
+    @Builder
+    public ProductInsertDto(Long brandId, Category category, String productName, Integer productPrice) {
+        this.brandId = brandId;
+        this.category = category;
+        this.productName = productName;
+        this.productPrice = productPrice;
+    }
 }

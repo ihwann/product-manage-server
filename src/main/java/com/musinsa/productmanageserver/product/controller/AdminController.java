@@ -17,6 +17,7 @@ import com.musinsa.productmanageserver.product.service.ProductCommandService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,7 +39,7 @@ public class AdminController {
     @PostMapping("/products")
     public ResponseEntity<BaseResponse<ProductResponse>> addProduct(
         @Parameter(description = "상품 정보", required = true)
-        @RequestBody ProductInsertRequest productInsertRequest
+        @RequestBody @Valid ProductInsertRequest productInsertRequest
     ) {
 
         ProductInsertDto insertDto = ProductInsertDto.fromRequestBuilder()
@@ -87,7 +88,7 @@ public class AdminController {
     @PostMapping("/brands")
     public ResponseEntity<BaseResponse<BrandResponse>> addBrand(
         @Parameter(description = "브랜드 정보", required = true)
-        @RequestBody BrandInsertRequest brandInsertRequest
+        @RequestBody @Valid BrandInsertRequest brandInsertRequest
     ) {
 
         BrandInsertDto insertDto = BrandInsertDto.fromRequestBuilder()
@@ -106,7 +107,7 @@ public class AdminController {
         @Parameter(name = "id", description = "브랜드 ID", required = true, in = ParameterIn.PATH)
         @PathVariable("id") Long id,
         @Parameter(description = "브랜드 정보", required = true)
-        @RequestBody BrandUpdateRequest brandUpdateRequest
+        @RequestBody @Valid  BrandUpdateRequest brandUpdateRequest
     ) {
 
         BrandUpdateDto updateDto = BrandUpdateDto.fromRequestBuilder()
@@ -126,7 +127,6 @@ public class AdminController {
         @Parameter(name = "id", description = "브랜드 ID", required = true, in = ParameterIn.PATH)
         @PathVariable("id") Long id
     ) {
-
         productCommandService.deleteBrand(id);
 
         return ResponseEntity.ok(new BaseResponse(BaseResponse.SUCCESS, null));

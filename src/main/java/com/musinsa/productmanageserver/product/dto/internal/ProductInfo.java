@@ -5,7 +5,9 @@ import com.musinsa.productmanageserver.product.model.ProductEntity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
+@ToString
 @Getter
 @NoArgsConstructor
 public class ProductInfo {

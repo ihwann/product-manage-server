@@ -2,7 +2,7 @@ package com.musinsa.productmanageserver.product.service;
 
 import com.musinsa.productmanageserver.common.type.Category;
 import com.musinsa.productmanageserver.exception.NotFoundResourceException;
-import com.musinsa.productmanageserver.infrastucture.redis.service.ProductSortManager;
+import com.musinsa.productmanageserver.infrastucture.redis.service.ProductPriceComparisonManager;
 import com.musinsa.productmanageserver.product.dto.internal.CategoryPriceInfo;
 import com.musinsa.productmanageserver.product.dto.internal.LowestBrandInfo;
 import com.musinsa.productmanageserver.product.dto.internal.ProductInfo;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ProductQueryService {
 
-    private final ProductSortManager productSortManager;
+    private final ProductPriceComparisonManager productPriceComparisonManager;
     private final ProductRepository productRepository;
 
     /**
@@ -33,7 +33,7 @@ public class ProductQueryService {
     public List<ProductInfo> getLowestPriceBrandsByCategory() {
 
         return Arrays.stream(Category.values())
-            .map(productSortManager::getLowestPriceProductByCategory)
+            .map(productPriceComparisonManager::getLowestPriceProductByCategory)
             .flatMap(Optional::stream)
             .map(productId -> findProductInfo(Long.parseLong(productId)))
             .flatMap(Optional::stream)
@@ -49,7 +49,7 @@ public class ProductQueryService {
      */
     public List<ProductInfo> getHighestPriceAllProductByCategory(Category category) {
 
-        return productSortManager.getHighestPriceAllProductByCategory(category)
+        return productPriceComparisonManager.getHighestPriceAllProductByCategory(category)
             .stream()
             .map(productId -> findProductInfo(Long.parseLong(productId)))
             .flatMap(Optional::stream)
@@ -64,7 +64,7 @@ public class ProductQueryService {
      */
     public List<ProductInfo> getLowestPriceAllProductByCategory(Category category) {
 
-        return productSortManager.getLowestPriceAllProductByCategory(category)
+        return productPriceComparisonManager.getLowestPriceAllProductByCategory(category)
             .stream()
             .map(productId -> findProductInfo(Long.parseLong(productId)))
             .flatMap(Optional::stream)
@@ -77,7 +77,7 @@ public class ProductQueryService {
      * @return 최저가 브랜드 정보
      */
     public LowestBrandInfo getLowestPriceBrand() {
-        ScoredEntry<String> lowestPriceBrandEntry = productSortManager.getLowestPriceBrand()
+        ScoredEntry<String> lowestPriceBrandEntry = productPriceComparisonManager.getLowestPriceBrand()
             .orElseThrow(
                 () -> new NotFoundResourceException(HttpStatus.NOT_FOUND, "최저가 브랜드가 존재하지 않습니다."));
 
@@ -99,7 +99,7 @@ public class ProductQueryService {
     private List<CategoryPriceInfo> getCategoryPriceListByBrandName(String brandName) {
 
         return Arrays.stream(Category.values())
-            .map(category -> productSortManager.getLowestPriceProductByBrandCategory(
+            .map(category -> productPriceComparisonManager.getLowestPriceProductByBrandCategory(
                 brandName, category))
             .flatMap(Optional::stream)
             .map(productId -> findProductInfo(Long.parseLong(productId)))

@@ -34,7 +34,7 @@ public class CommonExceptionHandler {
 
         BaseResponse<Object> response = BaseResponse.builder()
             .resultCode(BaseResponse.FAIL)
-            .data("잘못된 요청 입니다.")
+            .data(exception.getMessage())
             .build();
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
@@ -69,8 +69,7 @@ public class CommonExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    protected ResponseEntity<BaseResponse<Object>> handleCommonException(
-        MethodArgumentNotValidException exception) {
+    protected ResponseEntity<BaseResponse<Object>> handleCommonException(Exception exception) {
 
         log.error("Exception: {}", exception.getMessage());
 

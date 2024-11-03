@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ProductSortManager {
+public class ProductPriceComparisonManager {
 
     private final RedisCommandComponent redisCommandComponent;
 
@@ -39,11 +39,16 @@ public class ProductSortManager {
             category.name());
 
         RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(categoryKey);
-        Double lastScore = scoredSortedSet.lastScore();
 
-        return scoredSortedSet.valueRange(lastScore, true, lastScore, true)
-            .stream()
-            .toList();
+        return Optional.of(scoredSortedSet)
+            .filter(set -> !set.isEmpty())
+            .map(set -> {
+                Double lastScore = scoredSortedSet.lastScore();
+                return set.valueRange(lastScore, true, lastScore, true)
+                    .stream()
+                    .toList();
+            })
+            .orElse(List.of());
     }
 
     /**
@@ -57,11 +62,16 @@ public class ProductSortManager {
             category.name());
 
         RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(categoryKey);
-        Double firstScore = scoredSortedSet.firstScore();
 
-        return scoredSortedSet.valueRange(firstScore, true, firstScore, true)
-            .stream()
-            .toList();
+        return Optional.of(scoredSortedSet)
+            .filter(set -> !set.isEmpty())
+            .map(set -> {
+                Double firstScore = scoredSortedSet.firstScore();
+                return set.valueRange(firstScore, true, firstScore, true)
+                    .stream()
+                    .toList();
+            })
+            .orElse(List.of());
     }
 
 
@@ -74,8 +84,6 @@ public class ProductSortManager {
 
         String categoryKey = RedisKeyGenerator.generateKey(priceSortedSetCategoryKey,
             category.name());
-
-        RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(categoryKey);
 
         return Optional.ofNullable(getScoredSortedSet(categoryKey))
             .filter(set -> !set.isEmpty())
@@ -104,8 +112,6 @@ public class ProductSortManager {
         String brandCategoryKey = RedisKeyGenerator.generateKey(priceSortedSetBrandCategoryKey,
             brandName, category.name());
 
-        RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(brandCategoryKey);
-
         return Optional.ofNullable(getScoredSortedSet(brandCategoryKey))
             .filter(set -> !set.isEmpty())
             .map(RScoredSortedSet::first);
@@ -113,13 +119,13 @@ public class ProductSortManager {
 
 
     /**
-     * 카테고리별 최저가 세트 조회
-     * @param categoryKey 카테고리별 최저가 세트 키
-     * @return 카테고리별 최저가 세트
+     * RScoredSortedSet 조회
+     * @param key 키
+     * @return RScoredSortedSet
      */
-    private RScoredSortedSet<String> getScoredSortedSet(String categoryKey) {
+    private RScoredSortedSet<String> getScoredSortedSet(String key) {
 
-        return redisCommandComponent.getScoredSortedSet(categoryKey);
+        return redisCommandComponent.getScoredSortedSet(key);
     }
 
     /**
@@ -144,15 +150,6 @@ public class ProductSortManager {
 
         return getScoredSortedSet(brandCategoryKey)
             .addAndGetRank(productInfo.getProductPrice(), String.valueOf(productInfo.getProductId()));
-    }
-
-    /**
-     * 브랜드별 최저가 세트에 상품 추가
-     */
-    public void addToBrandSet(String brandName, int brandPrice) {
-        String brandKey = RedisKeyGenerator.generateKey(priceSortedSetBrandKey);
-
-        getScoredSortedSet(brandKey).add(brandPrice, brandName);
     }
 
     /**
@@ -211,5 +208,36 @@ public class ProductSortManager {
             productInfo.getBrandInfo().getBrandName(), productInfo.getCategory().name());
 
         getScoredSortedSet(brandCategoryKey).remove(String.valueOf(productInfo.getProductId()));
+    }
+
+    public void updateBrandName(String oldBrandName, String newBrandName) {
+        copyNewBrandSet(oldBrandName, newBrandName);
+        copyNewBrandCategorySet(oldBrandName, newBrandName);
+    }
+
+    private void copyNewBrandSet(String oldBrandName, String newBrandName) {
+        String brandKey = RedisKeyGenerator.generateKey(priceSortedSetBrandKey);
+
+        RScoredSortedSet<String> scoredSortedSet = getScoredSortedSet(brandKey);
+
+        scoredSortedSet.replace(oldBrandName, newBrandName);
+    }
+
+    private void copyNewBrandCategorySet(String oldBrandName, String newBrandName) {
+        Arrays.stream(Category.values())
+            .forEach(category -> {
+                String oldBrandCategoryKey = RedisKeyGenerator.generateKey(priceSortedSetBrandCategoryKey,
+                    oldBrandName, category.name());
+                String newBrandCategoryKey = RedisKeyGenerator.generateKey(priceSortedSetBrandCategoryKey,
+                    newBrandName, category.name());
+
+                RScoredSortedSet<String> oldBrandCategorySet = getScoredSortedSet(oldBrandCategoryKey);
+                RScoredSortedSet<String> newBrandCategorySet = getScoredSortedSet(newBrandCategoryKey);
+
+                oldBrandCategorySet.entryIterator()
+                        .forEachRemaining(entry -> newBrandCategorySet.add(entry.getScore(), entry.getValue()));
+
+                oldBrandCategorySet.delete();
+            });
     }
 }

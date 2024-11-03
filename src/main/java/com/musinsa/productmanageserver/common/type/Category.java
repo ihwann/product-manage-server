@@ -1,5 +1,7 @@
 package com.musinsa.productmanageserver.common.type;
 
+import static com.musinsa.productmanageserver.common.constant.Constants.ErrorMessage.INVALID_CATEGORY;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -26,6 +28,6 @@ public enum Category {
                 return category;
             }
         }
-        throw new IllegalArgumentException("유효하지 않은 카테고리 입니다. : " + name);
+        throw new IllegalArgumentException(INVALID_CATEGORY + name);
     }
 }
