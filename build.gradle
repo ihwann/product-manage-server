@@ -1,14 +1,7 @@
-buildscript {
-    ext {
-        queryDslVersion = "5.0.0"
-    }
-}
-
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.4'
     id 'io.spring.dependency-management' version '1.1.6'
-    id "com.ewerk.gradle.plugins.querydsl" version "1.0.10"
 }
 
 group = 'com.musinsa'
@@ -33,12 +26,6 @@ dependencies {
     implementation 'org.signal:embedded-redis:0.9.0'
     compileOnly 'org.projectlombok:lombok'
 
-    // Querydsl 추가
-    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
-    annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
-    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
-    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
-
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
@@ -48,34 +35,10 @@ dependencies {
     testAnnotationProcessor'org.projectlombok:lombok'
 }
 
-def querydslDir = "$buildDir/generated/'querydsl'"
-
-compileJava.doFirst {
-    delete file("${querydslDir}/com")
-}
-
-querydsl {
-    jpa = true
-    querydslSourcesDir = querydslDir
-}
-
-sourceSets {
-    main.java.srcDir querydslDir
-}
-
-configurations {
-    querydsl.extendsFrom compileClasspath
-}
-
-compileQuerydsl {
-    options.annotationProcessorPath = configurations.querydsl
-}
-
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
-    querydsl.extendsFrom compileClasspath
 }
 
 jar {
