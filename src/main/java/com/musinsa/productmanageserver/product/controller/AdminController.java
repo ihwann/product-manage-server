@@ -63,7 +63,7 @@ public class AdminController {
 
         ProductUpdateDto updateDto = ProductUpdateDto.builder()
             .productId(id)
-            .productPrice(productRequest.price())
+            .productPrice(productRequest.productPrice())
             .build();
 
         ProductInfo productInfo = productCommandService.updateProduct(updateDto);
